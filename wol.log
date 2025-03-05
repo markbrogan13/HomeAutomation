@@ -1,8 +1,0 @@
-2025-03-04 15:24:07 - INFO - starting ping on 10.10.13.13
-2025-03-04 15:24:18 - WARNING - Host is down
-2025-03-04 15:25:40 - INFO - starting ping on 10.10.13.13
-2025-03-04 15:25:51 - WARNING - Host is down
-2025-03-04 15:26:45 - INFO - starting ping on 10.10.13.13
-2025-03-04 15:26:56 - WARNING - Host is down
-2025-03-04 15:26:56 - ERROR - Subnet/VLAN mismatch -- packet will not sent across subnets:
-2025-03-04 15:26:56 - ERROR - Server IP: 10.114.18.159, Host IP: 10.10.13.13

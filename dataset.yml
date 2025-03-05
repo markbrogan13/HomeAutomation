@@ -1,0 +1,18 @@
+NODES:
+  master.brogan.gg: &Node_alias
+    HOST_USERNAME: "mark"
+    HOST_IP_ETH: "10.10.13.13"
+    HOST_MAC_ETH: "c8:7f:54:07:a6:e7"
+    HOST_IP_WIFI: "10.10.13.29"
+    HOST_MAC_WIFI: "d8:80:83:33:b9:3d"
+
+  vm01.brogan.gg:
+    HOST_USERNAME: "mbrogan"
+    HOST_IP_ETH: "10.10.13.11"
+    HOST_MAC_ETH: "00:a0:98:6e:fa:6d" # Virtual Bridge MAC
+
+  win.brogan.gg:
+    HOST_USERNAME: "mark" # This is attached to my windows account :(
+    HOST_IP_ETH: "10.10.13.12"
+    HOST_MAC_ETH: "00:a0:98:27:3e:ba" # Virtual Bridge MAC
+

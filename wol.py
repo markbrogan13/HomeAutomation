@@ -114,4 +114,4 @@ if __name__ == "__main__":
         log.info(f"pinging host ... {host_ip} for 20 packets")
         return_val_post_wol = check_on_state(host_ip, 20)
         
-        
+# TODO: add in helper functions and add in continuation for other tasks based on device

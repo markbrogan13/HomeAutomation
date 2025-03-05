@@ -44,7 +44,7 @@ def check_on_state(ip_addr, packets=1):
     result = state.stdout
 
     # returns a logical false, noting the device is offline. Otherwise logical true for anything less than 100% loss
-    if "100.0% packet loss" in result:
+    if "100% packet loss" in result:
         log.warning("Host is down")
         return False
     else:

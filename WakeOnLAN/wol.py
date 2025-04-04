@@ -17,7 +17,7 @@ NODE_DATA = None
 parser = argparse.ArgumentParser(description="Wake on LAN with sophisticated response and dynamic checks")
 
 # add args for parser
-parser.add_argument("-n", "--hostname", type=str, help="Hostname of the device you want to wake", required=True)
+parser.add_argument("-n", "--hostname", type=str, help="Hostname of the device you want to wake")
 parser.add_argument("-i", "--nic-type", type=str, help="Interface type, ETH | WIFI", default="ETH")
 
 # init logger
@@ -50,6 +50,38 @@ def check_on_state(ip_addr, packets=1):
     else:
         log.info("Host is alive")
         return True
+    
+def get_hostname(node_data):
+    hostname_user_input = input("Enter in the hostname of the device: \t")
+    print(node_data["NODES"])
+    # Check if hostname is already in the yaml
+    try:
+        for node in node_data["NODES"]:
+            if hostname_user_input == node:
+                args.hostname = hostname_user_input
+                log.info(f'Found hostname in yaml file, using: {node_data["NODES"][args.hostname]}')
+    except KeyError:
+        with open("dataset.yml", "r") as inv:
+            node_data = yaml.safe_load(inv)
+
+        new_node = {
+            hostname_user_input: {
+                "HOST_USERNAME": input("\nEnter username\n"),
+                "HOST_IP_ETH": input("Enter IP of ETH interface\n"),
+                "HOST_MAC_ETH": input("Enter MAC Address of ETH interface\n"),
+                "HOST_IP_WIFI": input("Enter IP of WIFI interface -- leave blank if none\n"),
+                "HOST_MAC_WIFI": input("Enter MAC Address of WIFI interface -- leave blank if none")
+            }
+        }
+
+        node_data["NODES"].update(new_node)
+
+        log.info("Loading New Node into the yaml file")
+        with open('dataset.yml', "w") as inv:
+            yaml.dump(node_data, inv, default_flow_style=False, indent=2)
+
+        log.info("yaml file successuflly updated")
+        return node_data
 
 if __name__ == "__main__":
     # Load the yaml file into the dataset variable
@@ -62,6 +94,12 @@ if __name__ == "__main__":
         -i, --nic-type : device NIC [ETH | WIFI]
     """
     args = parser.parse_args() # parses into argument subtypes
+
+    """
+        Add in a small helper if there are no args
+    """
+    if args.hostname is None:
+        NODE_DATA = get_hostname(NODE_DATA)
 
     if args.nic_type == "ETH": # Ethernet NIC type (Default)
         return_val = check_on_state(NODE_DATA["NODES"][args.hostname]["HOST_IP_ETH"])

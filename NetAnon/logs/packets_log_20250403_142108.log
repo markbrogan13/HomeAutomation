@@ -1,0 +1,5 @@
+Starting packet inspection in foreground
+Source IP            Destination IP       Protocol   Source Port     Destination Port
+--------------------------------------------------------------------------------
+10.114.224.12        10.114.18.159        TCP        22              51522          
+10.114.18.159        10.114.224.12        TCP        51522           22             

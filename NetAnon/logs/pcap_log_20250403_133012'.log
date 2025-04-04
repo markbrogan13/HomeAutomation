@@ -1,0 +1,4 @@
+2025-04-03 13:30:12 - WARNING - Starting background thread: <Thread(Thread-1 (capture_packets), initial)>
+2025-04-03 13:30:12 - INFO - Background task is running
+2025-04-03 13:30:12 - INFO - Inspecting capture_20250403_132452.pcap -- read packet_log file for more info
+2025-04-03 13:30:14 - INFO - Captured 100 packets and saved to pcaps/capture_20250403_133012.pcap

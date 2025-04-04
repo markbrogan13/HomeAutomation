@@ -55,6 +55,8 @@ def inspect_packets(input_file):
         "Source IP", "Destination IP", "Protocol", "Source Port", "Destination Port"))
     packet_log.info("-" * 80)  # Separator line
 
+    data_arr = []
+
     for packet in packets:
         src_ip = "N/A"
         dst_ip = "N/A"
@@ -77,6 +79,18 @@ def inspect_packets(input_file):
 
         packet_log.info("{:<20} {:<20} {:<10} {:<15} {:<15}".format(
             src_ip, dst_ip, protocol_name, src_port, dst_port))
+
+        data_arr.append({
+        "Source IP": src_ip,
+        "Destination IP": dst_ip,
+        "Protocol": protocol_name,
+        "Source Port": src_port,
+        "Destination Port": dst_port,
+        "Raw Packet": bytes(packet)
+        })
+    
+    df = pd.DataFrame(data_arr)
+    return df
 
 if __name__ == "__main__":
     interface = 'en0'

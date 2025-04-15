@@ -1,6 +1,7 @@
 import threading
-from scapy.all import sniff, wrpcap, rdpcap
+from scapy.all import sniff, wrpcap, rdpcap, IP, TCP, UDP
 import pandas as pd
+import sqlite3
 from datetime import datetime
 import logging, os
 
@@ -46,59 +47,73 @@ def background_capture(interface, count, output_file):
     capture_thread = threading.Thread(target=capture_packets, args=(interface, count, output_file))
     log.warning(f'Starting background thread: {capture_thread}')
     capture_thread.start()
+    return capture_thread
 
 # inspects and logs the output of the packets, saves to a log file for now
 # TODO: add in the ability to save packets to a database
-def inspect_packets(input_file):
+def inspect_packets(input_file, db_filename="net_anon.db"):
     packets = rdpcap(input_file)
     packet_log.info("{:<20} {:<20} {:<10} {:<15} {:<15}".format(
         "Source IP", "Destination IP", "Protocol", "Source Port", "Destination Port"))
     packet_log.info("-" * 80)  # Separator line
 
-    data_arr = []
+    # Create connection to a SQLite DB
+    conn = sqlite3.connect(db_filename)
+    cursor = conn.cursor()
+
+    # Create the packets table if it doesn't exist
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS packets (
+            src_ip TEXT,
+            dst_ip TEXT,
+            protocol TEXT,
+            src_port INTEGER,
+            dst_port INTEGER,
+            raw_packet BLOB
+        )
+    """)
 
     for packet in packets:
         src_ip = "N/A"
         dst_ip = "N/A"
         protocol_name = "N/A"
-        src_port = "N/A"
-        dst_port = "N/A"
+        src_port = None
+        dst_port = None
 
-        if packet.haslayer("IP"):
-            src_ip = packet["IP"].src
-            dst_ip = packet["IP"].dst
-            protocol_num = packet["IP"].proto
+        if IP in packet:
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+            protocol_num = packet[IP].proto
             protocol_name = {1: "ICMP", 6: "TCP", 17: "UDP"}.get(protocol_num, str(protocol_num))
 
-        if packet.haslayer("TCP"):
-            src_port = packet["TCP"].sport
-            dst_port = packet["TCP"].dport
-        elif packet.haslayer("UDP"):
-            src_port = packet["UDP"].sport
-            dst_port = packet["UDP"].dport
+        if TCP in packet:
+            src_port = packet[TCP].sport
+            dst_port = packet[TCP].dport
+        elif UDP in packet:
+            src_port = packet[UDP].sport
+            dst_port = packet[UDP].dport
+
+        raw_packet = bytes(packet)
 
         packet_log.info("{:<20} {:<20} {:<10} {:<15} {:<15}".format(
-            src_ip, dst_ip, protocol_name, src_port, dst_port))
+        src_ip, dst_ip, protocol_name, str(src_port), str(dst_port)))
 
-        data_arr.append({
-        "Source IP": src_ip,
-        "Destination IP": dst_ip,
-        "Protocol": protocol_name,
-        "Source Port": src_port,
-        "Destination Port": dst_port,
-        "Raw Packet": bytes(packet)
-        })
-    
-    df = pd.DataFrame(data_arr)
-    return df
+        cursor.execute("""
+            INSERT INTO packets (src_ip, dst_ip, protocol, src_port, dst_port, raw_packet)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (src_ip, dst_ip, protocol_name, src_port, dst_port, raw_packet))
+
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
     interface = 'en0'
-    packet_count = 100 # arbitrary however this will be a rolling value that I want to operate as a service
+    packet_count = 10000 # arbitrary however this will be a rolling value that I want to operate as a service
     date_time_str = datetime.now().strftime("capture_%Y%m%d_%H%M%S")
     output_file = f'pcaps/{date_time_str}.pcap'
 
-    background_capture(interface, packet_count, output_file)
+    # Grab the thread we start with background tasks
+    background_thread = background_capture(interface, packet_count, output_file)
 
     log.info('Background task is running')
     packet_log.warning('Starting packet inspection in foreground')
@@ -109,5 +124,11 @@ if __name__ == "__main__":
         filepath = f'pcaps/{file}'
         inspect_packets(filepath)
         if filepath is not output_file:
-            log.warning(f'Removing old file: {file} -- will not remove most recent run')
+            log.warning(f'Removing old file: {file}')
             os.remove(filepath)
+    
+    # Joins the thread back to the parent task
+    background_thread.join()
+    inspect_packets(output_file) # inspect the most recent capture
+    log.warning(f'Removing current file: {output_file}')
+    os.remove(f'{os.getcwd()}/{output_file}')

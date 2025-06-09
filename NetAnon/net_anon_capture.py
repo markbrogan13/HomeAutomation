@@ -5,6 +5,15 @@ import sqlite3
 from datetime import datetime
 import logging, os
 
+
+# Check if the 'logs' directory exists, and create it if it doesn't
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+# Check if the 'pcaps' directory exists, and create it if it doesn't
+if not os.path.exists('pcaps'):
+    os.makedirs('pcaps')
+
 '''
     init logger -- want to have better ability for syslog outputs if needbe and 
     safer for a systemctl service
@@ -107,7 +116,7 @@ def inspect_packets(input_file, db_filename="net_anon.db"):
     conn.close()
 
 if __name__ == "__main__":
-    interface = 'en0'
+    interface = 'en0' # default mac wlan interface name
     packet_count = 10000 # arbitrary however this will be a rolling value that I want to operate as a service
     date_time_str = datetime.now().strftime("capture_%Y%m%d_%H%M%S")
     output_file = f'pcaps/{date_time_str}.pcap'
